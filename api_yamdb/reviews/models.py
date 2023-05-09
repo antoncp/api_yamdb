@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
+from django.utils import timezone
 
 
 class GroupBaseModel(models.Model):
@@ -50,3 +52,37 @@ class Category(GroupBaseModel):
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+
+
+class Title(models.Model):
+    """Title db model class."""
+    name = models.CharField(
+        'Название',
+        max_length=256,
+    )
+    year = models.PositiveSmallIntegerField(
+        'Год выпуска',
+        validators=[MaxValueValidator(timezone.now().year)]
+    )
+    description = models.TextField(
+        'Описание',
+        null=True,
+        blank=True,
+    )
+    genres = models.ManyToManyField(
+        Genre,
+        verbose_name='Жанр',
+        related_query_name='titles'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        verbose_name='Категория',
+        related_query_name='titles',
+        null=True,
+    )
+
+    def display_genres(self):
+        return ', '.join(map(str, self.genres.all()))
+
+    display_genres.short_description = 'Жанры'

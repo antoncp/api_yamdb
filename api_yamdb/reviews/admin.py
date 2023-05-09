@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Genre
+from .models import Category, Genre, Title
 
 
 class GenreAdmin(admin.ModelAdmin):
@@ -15,5 +15,18 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ('name',)
 
 
+class TitleAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'year',
+        'description',
+        'display_genres',
+        'category'
+    )
+    search_fields = ('name',)
+    list_filter = ('name',)
+
+
 admin.site.register(Genre, GenreAdmin)
 admin.site.register(Category, CategoryAdmin)
+admin.site.register(Title, TitleAdmin)
