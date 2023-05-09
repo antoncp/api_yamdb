@@ -12,7 +12,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         """
-        Check
+        Check that the name field is unique (case insensetive).
 
         """
         value = value.capitalize()
@@ -32,7 +32,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         """
-        Check
+        Check that the name field is unique (case insensetive).
 
         """
         value = value.capitalize()
