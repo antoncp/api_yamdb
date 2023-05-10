@@ -93,7 +93,7 @@ class Title(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return f'{self.category} "{self.name}", {self.year}'
 
     def display_genres(self):
         return ', '.join(map(str, self.genre.all()))
