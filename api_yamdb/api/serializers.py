@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Avg
 
 from reviews.models import Category, Genre, Title
 
@@ -19,7 +20,7 @@ class GenreSerializer(serializers.ModelSerializer):
         value = value.capitalize()
         if Genre.objects.filter(name=value).exists():
             raise serializers.ValidationError(
-                detail={'name': 'Такой жанр уже есть.'}
+                detail={'name': 'This genre already exists.'}
             )
         return value
 
@@ -39,7 +40,7 @@ class CategorySerializer(serializers.ModelSerializer):
         value = value.capitalize()
         if Category.objects.filter(name=value).exists():
             raise serializers.ValidationError(
-                detail={'name': 'Такая категория уже есть.'}
+                detail={'name': 'This category already exists.'}
             )
         return value
 
@@ -48,13 +49,15 @@ class TitleSerializer(serializers.ModelSerializer):
     """Title model serializer."""
     # genre = ...
     category = CategorySerializer()
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('name', 'year', 'description', 'category')
+        fields = ('id', 'name', 'year', 'description', 'category')
         read_only_fields = ('id',)
 
-    def get_rating(self, obj):
-        pass
-
+    def to_representation(self, instance):
+        """Add rating field."""
+        representation = super().to_representation(instance)
+        rating = instance.reviews.aggregate(Avg('score')).get('score__avg')
+        representation['rating'] = round(rating) if rating else rating
+        return representation

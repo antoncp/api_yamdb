@@ -9,7 +9,7 @@ class GroupBaseModel(models.Model):
     is_cleaned = False
 
     name = models.CharField(
-        'Название',
+        'Name',
         max_length=256,
         unique=True,
     )
@@ -28,10 +28,10 @@ class GroupBaseModel(models.Model):
     def clean(self):
         self.is_cleaned = True
         if self.__class__.objects.filter(name=self.name.capitalize()).exists():
-            raise ValidationError('Такое название уже есть в базе данных.')
+            raise ValidationError('This name already exists.')
 
     def save(self, *args, **kwargs):
-        """Save all names in uppercase format for consistency."""
+        """Capitalize all names before saving for consistency."""
         if not self.is_cleaned:
             self.full_clean()
         self.name = self.name.capitalize()
@@ -42,47 +42,69 @@ class Genre(GroupBaseModel):
     """Genre db model class."""
 
     class Meta:
-        verbose_name = "Жанр"
-        verbose_name_plural = "Жанры"
+        verbose_name = "Genre"
+        verbose_name_plural = "Genres"
 
 
 class Category(GroupBaseModel):
     """Category db model class."""
 
     class Meta:
-        verbose_name = "Категория"
-        verbose_name_plural = "Категории"
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
 
 
 class Title(models.Model):
     """Title db model class."""
     name = models.CharField(
-        'Название',
+        'Name',
         max_length=256,
     )
     year = models.PositiveSmallIntegerField(
-        'Год выпуска',
+        'Release year',
         validators=[MaxValueValidator(timezone.now().year)]
     )
     description = models.TextField(
-        'Описание',
+        'Description',
         null=True,
         blank=True,
     )
-    genres = models.ManyToManyField(
+    genre = models.ManyToManyField(
         Genre,
-        verbose_name='Жанр',
-        related_query_name='titles'
+        verbose_name='Genre',
+        related_query_name='Genres'
     )
     category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
-        verbose_name='Категория',
+        on_delete=models.DO_NOTHING,
+        verbose_name='Category',
         related_query_name='titles',
         null=True,
     )
 
-    def display_genres(self):
-        return ', '.join(map(str, self.genres.all()))
+    class Meta:
+        verbose_name = "Work of art"
+        verbose_name_plural = "Works of art"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'year', 'category'],
+                name='name_year_category'
+            )
+        ]
 
-    display_genres.short_description = 'Жанры'
+    def __str__(self):
+        return self.name
+
+    def display_genres(self):
+        return ', '.join(map(str, self.genre.all()))
+
+    display_genres.short_description = 'Genres'
+
+
+class Review(models.Model):
+    title = models.ForeignKey(
+        Title,
+        related_name='reviews',
+        on_delete=models.CASCADE,
+    )
+    score = models.SmallIntegerField()
