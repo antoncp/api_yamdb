@@ -26,3 +26,11 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+
+
+def signup():
+    pass
+
+
+def get_token():
+    pass
