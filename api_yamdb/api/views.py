@@ -3,10 +3,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
+from rest_framework import filters
 
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleSerializer)
+from api.permissions import RoleIsAdmin
 from reviews.models import Category, Comment, Genre, Review, Title
 
 
@@ -19,19 +22,38 @@ class ListCreateDeleteViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 class GenreListCreateDeleteViewSet(ListCreateDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
     lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action == 'list':
+            self.permission_classes = (AllowAny,)
+        else:
+            self.permission_classes = (RoleIsAdmin,)
+        return super().get_permissions()
 
 
 class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action == 'list':
+            self.permission_classes = (AllowAny,)
+        else:
+            self.permission_classes = (RoleIsAdmin,)
+        return super().get_permissions()
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
 
-    
+
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -71,9 +93,11 @@ class CommentViewSet(viewsets.ModelViewSet):
             title_id=title_id,
             review_id=review_id
         )
-       
+
+
 def signup():
     pass
+
 
 def get_token():
     pass
