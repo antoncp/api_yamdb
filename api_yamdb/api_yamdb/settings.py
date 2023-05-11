@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'reviews',
     'api',
 ]
@@ -38,7 +40,6 @@ TEMPLATES_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATES_DIR],
         'DIRS': [TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -91,6 +92,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
+CSV_DATA_PATH = os.path.join(BASE_DIR, STATIC_URL, '/data/')
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
