@@ -147,7 +147,7 @@ class Title(models.Model):
     )
     category = models.ForeignKey(
         Category,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         verbose_name='Category',
         related_query_name='titles',
         null=True,
