@@ -18,7 +18,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'reviews.apps.ReviewsConfig',
     'reviews',
     'api',
 ]
@@ -97,6 +96,8 @@ STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 AUTH_USER_MODEL = 'reviews.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
