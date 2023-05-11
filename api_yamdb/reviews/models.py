@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -196,7 +196,7 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
 
     class Meta:
         verbose_name = "Review"
@@ -231,13 +231,12 @@ class Comment(models.Model):
     )
     text = models.TextField(verbose_name="Comment")
     pub_date = models.DateTimeField(
-        auto_now_add=True, db_index=True, verbose_name="Date of creation"
+        auto_now_add=True, db_index=True, verbose_name="Date created"
     )
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
 
     class Meta:
         verbose_name = "Comment"
         verbose_name_plural = "Comments"
-
