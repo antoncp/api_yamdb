@@ -184,7 +184,7 @@ class Review(models.Model):
         verbose_name="Work",
     )
     text = models.TextField(verbose_name="Text")
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         validators=[
             MaxValueValidator(10),
             MinValueValidator(1)
