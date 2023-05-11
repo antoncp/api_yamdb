@@ -31,7 +31,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
 
-
+    
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -71,3 +71,9 @@ class CommentViewSet(viewsets.ModelViewSet):
             title_id=title_id,
             review_id=review_id
         )
+       
+def signup():
+    pass
+
+def get_token():
+    pass
