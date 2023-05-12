@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Genre, Title, Review
+from .models import Category, Comment, Genre, Title, Review
 
 
 class GenreAdmin(admin.ModelAdmin):
@@ -30,8 +30,34 @@ class TitleAdmin(admin.ModelAdmin):
     empty_value_display = '-empty-'
 
 
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "text",
+        "score",
+        "title_id",
+        "author",
+        "pub_date"
+    )
+    search_fields = ("text",)
+    list_filter = ("pub_date", "title_id")
+    empty_value_display = "-empty-"
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        "text",
+        "title_id",
+        "review_id",
+        "author",
+        "pub_date"
+    )
+    search_fields = ("text",)
+    list_filter = ("pub_date", "title_id")
+    empty_value_display = "-empty-"
+
+
 admin.site.register(Genre, GenreAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Title, TitleAdmin)
-admin.site.register(Review)
-
+admin.site.register(Review, ReviewAdmin)
+admin.site.register(Comment, CommentAdmin)
