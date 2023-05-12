@@ -246,7 +246,6 @@ class Comment(models.Model):
         return self.text[:settings.STRING_OUTPUT_LENGTH]
 
     def clean(self):
-        self.is_cleaned = True
         if self.title_id != self.review_id.title_id:
             raise ValidationError(
                 'The provided title_id does not match the review'
