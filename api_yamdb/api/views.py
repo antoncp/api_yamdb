@@ -4,14 +4,15 @@ from api.permissions import RoleIsAdmin
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              SignUpSerializer, TitleSerializer,
-                             TokenSerializer)
+                             TokenSerializer, UserSerializer)
 from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Comment, Genre, Review, Title, User
@@ -99,7 +100,9 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-def send_confirmation_code(user):
+def create_confirmation_code(user):
+    """Create and sent confirmation_code for registration."""
+
     code = create_code(1000, 9999)
     user.confirmation_code = code
     user.save()
@@ -112,6 +115,7 @@ def send_confirmation_code(user):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def signup(request):
     """Creates a new user and sends a confirmation code to email."""
 
@@ -121,7 +125,7 @@ def signup(request):
 
     if user.exists():
         user = user.get(email=email)
-        send_confirmation_code(user)
+        create_confirmation_code(user)
         return Response(
             {'message': 'User with this email exists.'
              'Verification code sent again.'
@@ -134,18 +138,53 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        send_confirmation_code(user)
+        create_confirmation_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def get_token(request):
-    """Give a token to the user."""
-
     serializer = TokenSerializer(data=request.data)
-    if serializer.is_valid():
-        username = serializer.validated_data.get('username')
-        user = get_object_or_404(User, username=username)
-        access = AccessToken.for_user(user)
-        return Response(f'token: {access}', status=status.HTTP_200_OK)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(User, username=request.data['username'])
+    confirmation_code = serializer.data.get('confirmation_code')
+    if confirmation_code == str(user.confirmation_code):
+        return Response(f'token: {AccessToken.for_user(user)}',
+                        status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """ViewSet for viewing users and editing user data."""
+
+    lookup_field = 'username'
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (RoleIsAdmin,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+
+    @action(
+        methods=['GET', 'PATCH'],
+        detail=False,
+        url_path='me',
+        permission_classes=[IsAuthenticated]
+    )
+    def me_page(self, request):
+        """ViewSet for viewing by the user and
+        editing information about himself."""
+
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

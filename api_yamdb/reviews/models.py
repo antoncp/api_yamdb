@@ -34,6 +34,13 @@ class User(AbstractUser):
         unique=True,
         max_length=254,
     )
+
+    first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                  blank=True)
+
+    last_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                 blank=True)
+
     bio = models.TextField(
         verbose_name='Biography',
         blank=True,
@@ -58,8 +65,6 @@ class User(AbstractUser):
                 fields=('username', 'email'),
                 name='unique_user',
             ),
-            models.CheckConstraint(
-                check=~models.Q(username="me"), name="name_not_me")
         ]
 
     @property

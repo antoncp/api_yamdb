@@ -1,10 +1,8 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-
 from api.views import (CategoryListCreateDeleteViewSet, CommentViewSet,
                        GenreListCreateDeleteViewSet, ReviewViewSet,
-                       TitleViewSet, signup, get_token)
-
+                       TitleViewSet, UserViewSet, get_token, signup)
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 app_name = 'api'
 
@@ -22,6 +20,7 @@ router_v1.register(
     CommentViewSet,
     basename='comments'
 )
+router_v1.register(r'users', UserViewSet)
 
 category_list = CategoryListCreateDeleteViewSet.as_view({
     'get': 'list',
