@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from reviews.validators import username_validator
 
 
 class UserRoles(models.TextChoices):
@@ -24,7 +25,9 @@ class User(AbstractUser):
         unique=True,
         error_messages={
             'unique': 'This name is taken, please select another!',
-        })
+        },
+        validators=(username_validator,)
+    )
 
     email = models.EmailField(
         verbose_name='Email',
