@@ -100,15 +100,16 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-def create_confirmation_code(user):
+def create_confirmation_code(username):
     """Create and sent confirmation_code for registration."""
 
-    code = create_code(1000, 9999)
-    user.confirmation_code = code
+    confirmation_code = create_code(1000, 9999)
+    user = get_object_or_404(User, username=username)
+    user.confirmation_code = confirmation_code
     user.save()
 
     subject = 'Registration in the YaMDb project.'
-    message = f'Your confirmation code {code}.'
+    message = f'Your confirmation code {confirmation_code}.'
     from_email = settings.ADMIN_EMAIL
     to_email = [user.email]
     return send_mail(subject, message, from_email, to_email)
@@ -125,7 +126,7 @@ def signup(request):
 
     if user.exists():
         user = user.get(email=email)
-        create_confirmation_code(user)
+        create_confirmation_code(user.username)
         return Response(
             {'message': 'User with this email exists.'
              'Verification code sent again.'
