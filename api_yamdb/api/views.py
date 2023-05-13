@@ -6,11 +6,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             TitleSerializer)
-from api.permissions import RoleIsAdmin
-from api.filters import TitleFilter
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleSerializer)
+from .permissions import RoleIsAdmin
+from .filters import TitleFilter
 from reviews.models import Category, Comment, Genre, Review, Title
 
 
@@ -57,16 +57,12 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
 
-
-"""
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             self.permission_classes = [AllowAny]
         else:
             self.permission_classes = (RoleIsAdmin,)
         return super().get_permissions()
-
-"""
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
