@@ -1,16 +1,20 @@
-from django.shortcuts import get_object_or_404
+from random import randint as create_code
 
-from rest_framework import viewsets
-from rest_framework import mixins
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
-from rest_framework import filters
-
+from api.permissions import RoleIsAdmin
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
-                             TitleSerializer)
-from api.permissions import RoleIsAdmin
-from reviews.models import Category, Comment, Genre, Review, Title
+                             SignUpSerializer, TitleSerializer,
+                             TokenSerializer)
+from django.conf import settings
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class ListCreateDeleteViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
@@ -95,9 +99,53 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-def signup():
-    pass
+def send_confirmation_code(user):
+    code = create_code(1000, 9999)
+    user.confirmation_code = code
+    user.save()
+
+    subject = 'Registration in the YaMDb project.'
+    message = f'Your confirmation code {code}.'
+    from_email = settings.ADMIN_EMAIL
+    to_email = [user.email]
+    return send_mail(subject, message, from_email, to_email)
 
 
-def get_token():
-    pass
+@api_view(['POST'])
+def signup(request):
+    """Creates a new user and sends a confirmation code to email."""
+
+    serializer = SignUpSerializer(data=request.data)
+    email = request.data.get('email')
+    user = User.objects.filter(email=email)
+
+    if user.exists():
+        user = user.get(email=email)
+        send_confirmation_code(user)
+        return Response(
+            {'message': 'User with this email exists.'
+             'Verification code sent again.'
+             },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    else:
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data.get('email')
+        username = serializer.validated_data.get('username')
+        user = User.objects.get_or_create(username=username, email=email)
+        send_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def get_token(request):
+    """Give a token to the user."""
+
+    serializer = TokenSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.validated_data.get('username')
+        user = get_object_or_404(User, username=username)
+        access = AccessToken.for_user(user)
+        return Response(f'token: {access}', status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
