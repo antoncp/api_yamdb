@@ -94,7 +94,7 @@ class GroupBaseModel(models.Model):
         abstract = True
 
     def __str__(self):
-        return self.slug
+        return self.name
 
     def clean(self):
         self.is_cleaned = True

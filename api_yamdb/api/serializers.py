@@ -35,7 +35,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         """
-        Check that the name field is unique (case insensetive).
+        Check that the `name` field is unique (case insensitive).
 
         """
         value = value.capitalize()
@@ -52,17 +52,23 @@ class TitleSerializer(serializers.ModelSerializer):
         slug_field='slug',
         many=True,
         queryset=Genre.objects.all(),
-        required=True,
     )
     category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all()
+        slug_field='slug',
+        queryset=Category.objects.all(),
     )
     rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'description', 'rating', 'category', 'genre'
+            'id',
+            'name',
+            'year',
+            'description',
+            'rating',
+            'category',
+            'genre',
         )
         read_only_fields = ('id', 'rating')
         validators = [
@@ -80,7 +86,8 @@ class TitleSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['genre'] = GenreSerializer(
-            instance.genre, many=True
+            instance.genre,
+            many=True,
         ).data
         representation['category'] = CategorySerializer(instance.category).data
         return representation

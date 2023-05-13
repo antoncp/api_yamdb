@@ -10,6 +10,7 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleSerializer)
 from api.permissions import RoleIsAdmin
+from api.filters import TitleFilter
 from reviews.models import Category, Comment, Genre, Review, Title
 
 
@@ -51,10 +52,8 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    filter_backends = [
-        DjangoFilterBackend,
-    ]
-    filterset_fields = ['category', 'genre', 'year', 'name']   # надо добавить кастомный фильтр по слагам
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
     permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
 
