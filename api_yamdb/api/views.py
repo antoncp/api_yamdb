@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
-
 from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
@@ -51,7 +51,23 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    filter_backends = [
+        DjangoFilterBackend,
+    ]
+    filterset_fields = ['category', 'genre', 'year', 'name']   # надо добавить кастомный фильтр по слагам
+    permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
+
+
+"""
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            self.permission_classes = [AllowAny]
+        else:
+            self.permission_classes = (RoleIsAdmin,)
+        return super().get_permissions()
+
+"""
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

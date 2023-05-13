@@ -11,7 +11,6 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
     def validate_name(self, value):
         """
@@ -48,19 +47,35 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     """Title model serializer."""
-    # genre = ...
-    category = CategorySerializer()
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        many=True,
+        queryset=Genre.objects.all(),
+        required=True,
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'category')
-        read_only_fields = ('id',)
+        fields = (
+            'id', 'name', 'year', 'description', 'rating', 'category', 'genre'
+        )
+        read_only_fields = ('id', 'rating')
+
+    def get_rating(self, obj):
+        rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
+        rating_rounded = round(rating) if rating else rating
+        return rating_rounded
 
     def to_representation(self, instance):
-        """Add rating field."""
         representation = super().to_representation(instance)
-        rating = instance.reviews.aggregate(Avg('score')).get('score__avg')
-        representation['rating'] = round(rating) if rating else rating
+        representation['genre'] = GenreSerializer(
+            instance.genre, many=True
+        ).data
+        representation['category'] = CategorySerializer(instance.category).data
         return representation
 
 
