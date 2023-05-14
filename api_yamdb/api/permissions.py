@@ -33,3 +33,19 @@ class IsAuthorOrReadOnly(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (request.user == obj.author or request.method in SAFE_METHODS)
+
+
+class IsOwnerAdminModeratorOrReadOnly(BasePermission):
+    """
+    Must be superuser or administrator or author of the instance
+    to edit or delate objects. Other users could only read.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.method in SAFE_METHODS
+            or request.user == obj.author
+            or request.user.is_admin
+            or request.user.is_superuser
+            or request.user.is_moderator
+        )
