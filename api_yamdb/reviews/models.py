@@ -143,7 +143,7 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         verbose_name='Genre',
-        related_query_name='Genres'
+        related_query_name='titles'
     )
     category = models.ForeignKey(
         Category,
@@ -154,8 +154,8 @@ class Title(models.Model):
     )
 
     class Meta:
-        verbose_name = "Work of art"
-        verbose_name_plural = "Works of art"
+        verbose_name = 'Title'
+        verbose_name_plural = 'Titles'
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'year', 'category'],

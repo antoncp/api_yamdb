@@ -1,15 +1,16 @@
 from django.shortcuts import get_object_or_404
-
 from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             TitleSerializer)
-from api.permissions import RoleIsAdmin
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleSerializer)
+from .permissions import RoleIsAdmin
+from .filters import TitleFilter
 from reviews.models import Category, Comment, Genre, Review, Title
 
 
@@ -51,7 +52,17 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            self.permission_classes = [AllowAny]
+        else:
+            self.permission_classes = (RoleIsAdmin,)
+        return super().get_permissions()
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
