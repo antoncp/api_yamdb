@@ -98,6 +98,10 @@ STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
 AUTH_USER_MODEL = 'reviews.User'
 
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5,
@@ -115,5 +119,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+LIMIT_EMAIL = 254
 LIMIT_USERNAME = 150
 STRING_OUTPUT_LENGTH = 15
+ADMIN_EMAIL = "admin@yamdb.com"
