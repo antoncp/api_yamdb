@@ -1,8 +1,10 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
 from api.views import (CategoryListCreateDeleteViewSet, CommentViewSet,
                        GenreListCreateDeleteViewSet, ReviewViewSet,
                        TitleViewSet, UserViewSet, get_token, signup)
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+
 
 app_name = 'api'
 
@@ -43,8 +45,8 @@ urlpatterns = [
     path(
         'v1/categories/<slug:slug>/', category_detail, name='category-detail',
     ),
-    path('v1/genres/', category_list, name='genre-list'),
-    path('v1/genres/<slug:slug>/', category_detail, name='genre-detail'),
+    path('v1/genres/', genre_list, name='genre-list'),
+    path('v1/genres/<slug:slug>/', genre_detail, name='genre-detail'),
     path('v1/auth/signup/', signup),
     path('v1/auth/token/', get_token),
 ]
