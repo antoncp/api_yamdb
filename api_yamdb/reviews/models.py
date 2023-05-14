@@ -199,9 +199,6 @@ class Review(models.Model):
         auto_now_add=True, db_index=True, verbose_name="Date created"
     )
 
-    def __str__(self):
-        return self.text[:settings.STRING_OUTPUT_LENGTH]
-
     class Meta:
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
@@ -210,6 +207,9 @@ class Review(models.Model):
                 fields=["author", "title_id"], name="only_one_review_allowed"
             ),
         ]
+
+    def __str__(self):
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
 
 
 class Comment(models.Model):
@@ -238,9 +238,15 @@ class Comment(models.Model):
         auto_now_add=True, db_index=True, verbose_name="Date created"
     )
 
-    def __str__(self):
-        return self.text[:settings.STRING_OUTPUT_LENGTH]
-
     class Meta:
         verbose_name = "Comment"
         verbose_name_plural = "Comments"
+
+    def __str__(self):
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
+
+    def clean(self):
+        if self.title_id != self.review_id.title_id:
+            raise ValidationError(
+                'The provided title_id does not match the review'
+            )
