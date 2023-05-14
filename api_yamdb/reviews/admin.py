@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Comment, Genre, Title, Review
+from .models import Category, Comment, Genre, Title, Review, User
 
 
 class GenreAdmin(admin.ModelAdmin):
@@ -56,6 +56,19 @@ class CommentAdmin(admin.ModelAdmin):
     empty_value_display = "-empty-"
 
 
+class UserAdmin(admin.ModelAdmin):
+    list_display = (
+        'pk',
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        'bio',
+        'role'
+    )
+
+
+admin.site.register(User, UserAdmin)
 admin.site.register(Genre, GenreAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Title, TitleAdmin)

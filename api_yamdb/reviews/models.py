@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from reviews.validators import username_validator
 
 
 class UserRoles(models.TextChoices):
@@ -24,13 +25,22 @@ class User(AbstractUser):
         unique=True,
         error_messages={
             'unique': 'This name is taken, please select another!',
-        })
+        },
+        validators=(username_validator,)
+    )
 
     email = models.EmailField(
         verbose_name='Email',
         unique=True,
         max_length=254,
     )
+
+    first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                  blank=True)
+
+    last_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                 blank=True)
+
     bio = models.TextField(
         verbose_name='Biography',
         blank=True,
@@ -55,8 +65,6 @@ class User(AbstractUser):
                 fields=('username', 'email'),
                 name='unique_user',
             ),
-            models.CheckConstraint(
-                check=~models.Q(username="me"), name="name_not_me")
         ]
 
     @property
@@ -143,7 +151,7 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         verbose_name='Genre',
-        related_query_name='Genres'
+        related_query_name='titles'
     )
     category = models.ForeignKey(
         Category,
@@ -154,8 +162,8 @@ class Title(models.Model):
     )
 
     class Meta:
-        verbose_name = "Work of art"
-        verbose_name_plural = "Works of art"
+        verbose_name = 'Title'
+        verbose_name_plural = 'Titles'
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'year', 'category'],
