@@ -54,7 +54,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
 
     def get_permissions(self):
