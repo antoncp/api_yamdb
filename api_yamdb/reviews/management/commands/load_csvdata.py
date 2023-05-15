@@ -17,6 +17,7 @@ TABLE_FILE = {
     #'reviews_user': 'data/users.csv'
 }
 DB_PATH = settings.DATABASES['default']['NAME']
+CSV_DATA_PATH = settings.CSV_DATA_PATH
 
 
 class Command(BaseCommand):
@@ -31,7 +32,7 @@ class Command(BaseCommand):
 
     def _load_csv(self, table_name, file):
         sql_query1 = f'DELETE FROM {table_name}'
-        self._connect_to_sqlite_database(table_name, sql_query1)
+        self._connect_to_sqlite_database(DB_PATH, sql_query1)
         with open(file, 'r', encoding='utf-8') as file:
             data = csv.reader(file, delimiter=',')
             first_row = next(data)
@@ -42,5 +43,6 @@ class Command(BaseCommand):
                 self._connect_to_sqlite_database(DB_PATH, sql_query2, row)
 
     def handle(self, *args, **options):
+        print(CSV_DATA_PATH)
         for table, file in TABLE_FILE.items():
             self._load_csv(table, file)

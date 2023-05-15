@@ -79,9 +79,8 @@ class User(AbstractUser):
     def is_user(self):
         return self.role == UserRoles.USER
 
-   # лучше не урезать self.username. Оно должно быть уникально
     def __str__(self):
-        return self.username[:settings.STRING_OUTPUT_LENGTH]
+        return self.username
 
 
 class GroupBaseModel(models.Model):
