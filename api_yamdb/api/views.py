@@ -169,7 +169,7 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        create_confirmation_code(user)
+        create_confirmation_code(username)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -191,6 +191,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     lookup_field = 'username'
     queryset = User.objects.all()
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = UserSerializer
     permission_classes = (IsAdminOnly,)
     filter_backends = (SearchFilter,)
