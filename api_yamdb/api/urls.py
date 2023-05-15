@@ -38,7 +38,10 @@ genre_list = GenreListCreateDeleteViewSet.as_view({
 genre_detail = GenreListCreateDeleteViewSet.as_view({
     'delete': 'destroy',
 })
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7d6bc694837f6dbebf9b67a9f3ace65d5190674b
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),

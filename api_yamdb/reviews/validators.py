@@ -12,14 +12,3 @@ username_validator = RegexValidator(
 def validate_username(value):
     if value == 'me':
         raise ValidationError('Username cannot be "me"')
-
-
-
-"""
-def validate_allowed_username(username: str):
-    if value in settings.FORBIDDEN_USERNAMES:
-        raise ValidationError(
-            f"{username} is not allowed"),
-            params={"username": username},
-        )
-"""

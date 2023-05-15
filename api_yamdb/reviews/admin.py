@@ -46,12 +46,13 @@ class ReviewAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = (
         "text",
+        "title_id",
         "review_id",
         "author",
         "pub_date"
     )
     search_fields = ("text",)
-    list_filter = ("pub_date",)
+    list_filter = ("pub_date", "title_id")
     empty_value_display = "-empty-"
 
 

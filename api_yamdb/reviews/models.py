@@ -212,7 +212,7 @@ class Review(models.Model):
         verbose_name_plural = "Reviews"
         constraints = [
             models.UniqueConstraint(
-                fields=["author", "title_id"], name="only_one_review_allowed"
+                fields=["author", "title"], name="only_one_review_allowed"
             ),
         ]
 
@@ -228,6 +228,12 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name="comments",
         verbose_name="Author",
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Work",
     )
     review = models.ForeignKey(
         Review,
@@ -246,9 +252,3 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text[:settings.STRING_OUTPUT_LENGTH]
-
-    def clean(self):
-        if self.title_id != self.review_id.title_id:
-            raise ValidationError(
-                'The provided title_id does not match the review'
-            )
