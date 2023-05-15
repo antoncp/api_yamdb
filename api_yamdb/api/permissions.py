@@ -14,6 +14,11 @@ class ReadOnly(BasePermission):
 class RoleIsAdmin(BasePermission):
     """Only administrator or superuser."""
 
+    def has_permission(self, request, view):
+        user = request.user
+        return (user.is_authenticated
+                and (user.is_admin or user.is_superuser))
+
     def has_object_permission(self, request, view, obj):
         user = request.user
         return (user.is_authenticated
@@ -24,8 +29,7 @@ class RoleIsModerator(BasePermission):
     """Only for moderator."""
 
     def has_object_permission(self, request, view, obj):
-        user = request.user
-        return user.is_authenticated and user.is_moderator
+        return request.user.is_authenticated and request.user.is_moderator
 
 
 class IsAuthorOrReadOnly(BasePermission):

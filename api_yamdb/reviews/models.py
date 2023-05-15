@@ -23,9 +23,6 @@ class User(AbstractUser):
         'Username',
         max_length=settings.LIMIT_USERNAME,
         unique=True,
-        error_messages={
-            'unique': 'This name is taken, please select another!',
-        },
         validators=(username_validator,)
     )
 

@@ -140,15 +140,26 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     email = request.data.get('email')
     user = User.objects.filter(email=email)
+    username = request.data.get('username')
+
+    if User.objects.filter(username=username).exists():
+        if User.objects.filter(username=username).first().email != email:
+            return Response(
+                'Username is incorrect!', status=status.HTTP_400_BAD_REQUEST
+            )
 
     if user.exists():
+        if username != user.first().username:
+            return Response(
+                'Email is incorrect!', status=status.HTTP_400_BAD_REQUEST
+            )
         user = user.get(email=email)
         create_confirmation_code(user.username)
         return Response(
             {'message': 'User with this email exists.'
              'Verification code sent again.'
              },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_200_OK
         )
 
     else:
@@ -156,7 +167,7 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        create_confirmation_code(user)
+        create_confirmation_code(username)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -177,6 +188,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for viewing users and editing user data."""
 
     lookup_field = 'username'
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (RoleIsAdmin,)
