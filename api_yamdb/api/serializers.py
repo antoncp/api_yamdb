@@ -111,9 +111,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        request = self.context['request']
         title_id = self.context.get('view').kwargs.get('title_id')
-        author = self.context.get('request').user
-        if (self.context.get('request').method == 'POST'
+        author = request.user
+        if (request.method == 'POST'
            and Review.objects.filter(author=author, title=title_id).exists()):
             raise serializers.ValidationError(
                 'Only one review for one work from one author'
