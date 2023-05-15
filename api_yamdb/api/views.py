@@ -7,20 +7,21 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import (AllowAny,
-                                        IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api.permissions import RoleIsAdmin, IsOwnerAdminModeratorOrReadOnly
+from api.permissions import (IsAdminOrReadOnly, IsAdminOnly,
+                             IsOwnerAdminModeratorOrReadOnly)
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              SignUpSerializer, TitleSerializer,
                              TokenSerializer, UserSerializer)
 from api.filters import TitleFilter
-from reviews.models import Category, Comment, Genre, Review, Title, User
+from reviews.models import Category, Genre, Review, Title, User
 
 
 class ListCreateDeleteViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
@@ -35,13 +36,7 @@ class GenreListCreateDeleteViewSet(ListCreateDeleteViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
@@ -50,32 +45,21 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
-
-    def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
-            self.permission_classes = [AllowAny]
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerAdminModeratorOrReadOnly)
     permission_classes = (IsAuthenticatedOrReadOnly,
                           IsOwnerAdminModeratorOrReadOnly)
     serializer_class = ReviewSerializer
@@ -84,11 +68,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title_id = self.kwargs.get("title_id")
         return get_object_or_404(Title, id=title_id)
 
+    def _get_title(self):
+        title_id = self.kwargs.get("title_id")
+        return get_object_or_404(Title, id=title_id)
+
     def get_queryset(self):
+        title = self._get_title()
+        return title.reviews.all()
         title = self._get_title()
         return title.reviews.all()
 
     def perform_create(self, serializer):
+        title = self._get_title()
+        serializer.save(author=self.request.user, title=title)
         title = self._get_title()
         serializer.save(author=self.request.user, title=title)
 
@@ -97,7 +89,17 @@ class CommentViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAuthenticatedOrReadOnly,
                           IsOwnerAdminModeratorOrReadOnly)
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerAdminModeratorOrReadOnly)
     serializer_class = CommentSerializer
+
+    def _get_title(self):
+        title_id = self.kwargs.get("title_id")
+        return get_object_or_404(Title, id=title_id)
+
+    def _get_review(self):
+        review_id = self.kwargs.get("review_id")
+        return get_object_or_404(Review, id=review_id)
 
     def _get_title(self):
         title_id = self.kwargs.get("title_id")
@@ -114,7 +116,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = self._get_title()
         review = self._get_review()
-        serializer.save(author=self.request.user, title=title, review=review)
+        serializer.save(author=self.request.user, review=review) # title=title,
 
 
 def create_confirmation_code(username):
@@ -167,7 +169,7 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        create_confirmation_code(username)
+        create_confirmation_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -188,10 +190,9 @@ class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for viewing users and editing user data."""
 
     lookup_field = 'username'
-    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (RoleIsAdmin,)
+    permission_classes = (IsAdminOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
 

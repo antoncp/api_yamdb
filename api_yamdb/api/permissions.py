@@ -11,18 +11,35 @@ class ReadOnly(BasePermission):
         return request.method in SAFE_METHODS
 
 
-class RoleIsAdmin(BasePermission):
-    """Only administrator or superuser."""
+class IsAdminOrReadOnly(BasePermission):
+    """
+    Must be an authenticated superuser or an admin user
+    to delete and/or edit objects.
+    Other users may only view a single object or a list of objects.
+
+    """
+    message = "Editing or deleting this item is not allowed."
 
     def has_permission(self, request, view):
-        user = request.user
-        return (user.is_authenticated
-                and (user.is_admin or user.is_superuser))
+        return (
+            request.method in SAFE_METHODS
+            or (
+                request.user.is_authenticated
+                and (request.user.is_admin or request.user.is_superuser)
+            )
+        )
 
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        return (user.is_authenticated
-                and (user.is_admin or user.is_superuser))
+
+class IsAdminOnly(BasePermission):
+    """
+    Must be an authenticated superuser or an admin user to perform any actions.
+
+    """
+    message = "This action is not allowed."
+
+    def has_permission(self, request, view):
+        return (request.user.is_authenticated
+                and (request.user.is_admin or request.user.is_superuser))
 
 
 class RoleIsModerator(BasePermission):

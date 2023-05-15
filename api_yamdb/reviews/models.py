@@ -77,7 +77,7 @@ class User(AbstractUser):
         return self.role == UserRoles.USER
 
     def __str__(self):
-        return self.username[:settings.STRING_OUTPUT_LENGTH]
+        return self.username
 
 
 class GroupBaseModel(models.Model):
@@ -226,12 +226,6 @@ class Comment(models.Model):
         related_name="comments",
         verbose_name="Author",
     )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name="comments",
-        verbose_name="Work",
-    )
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -249,9 +243,3 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text[:settings.STRING_OUTPUT_LENGTH]
-
-    def clean(self):
-        if self.title != self.review.title:
-            raise ValidationError(
-                'The provided title_id does not match the review'
-            )
