@@ -8,7 +8,7 @@ REST API for feedback service (training project for Yandex Practicum). Writing d
 ### How to launch project in a dev-mode
 - Clone the repository
 ```
-git clone https://github.com/antoncp/api_final_yatube.git
+git clone https://github.com/antoncp/api_yamdb
 ``` 
 - Create and activate virtual environment
 ```
@@ -27,18 +27,53 @@ python manage.py migrate
 python manage.py runserver
 ```
 ### Examples of using REST API
-You could find detailed roadmap of using REST API of this project in [yatube_api/static/redoc.yaml](https://github.com/antoncp/api_final_yatube/blob/master/yatube_api/static/redoc.yaml)
+You could find detailed roadmap of using REST API of this project in [api_yamdb/static/redoc.yaml](https://github.com/antoncp/api_yamdb/blob/master/api_yamdb/static/redoc.yaml)
 
-Project has *** major endpoints for requests:
+Project has 9 major endpoints for requests:
 
-```
-Endpoints
-```
+*AUTH*
+* **/api/v1/auth/signup/** New user registration
+* **/api/v1/auth/token/** Getting a JWT-token
+
+*Users*
+* **/api/v1/users/** CRUD for users (admin only)
+* **/api/v1/users/me/** User account operations
+
+*Content*
+* **/api/v1/categories/** CRD for categories (non-read for admin only)
+* **/api/v1/genres/** CRD for genres (non-read for admin only)
+* **/api/v1/titles/** CRUD for works of art (non-read for admin only)
+* **/api/v1/titles/{title_id}/reviews/** CRUD for reviews
+* **/api/v1/titles/{title_id}/reviews/{review_id}/comments/** CRUD for comments
 
 Example of retrieving information about concrete post:
 
+*Request for fetching work of art with id №1*
+
 ```
-Examples
+GET http://127.0.0.1:8000/api/v1/titles/1/
+```
+
+*Response*
+
+```
+{
+  "id": 1,
+  "name": "Звёздные войны. Эпизод 5: Империя наносит ответный удар",
+  "year": 1980,
+  "description": "",
+  "rating": null,
+  "category": {
+    "name": "Фильм",
+    "slug": "movie"
+  },
+  "genre": [
+    {
+      "name": "Фантастика",
+      "slug": "sci-fi"
+    }
+  ]
+}
 ```
 
 ### Authors
