@@ -1,19 +1,25 @@
 from random import randint as create_code
 
-from api.permissions import RoleIsAdmin
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             SignUpSerializer, TitleSerializer,
-                             TokenSerializer)
 from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+
+from api.permissions import RoleIsAdmin, IsOwnerAdminModeratorOrReadOnly
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             SignUpSerializer, TitleSerializer,
+                             TokenSerializer, UserSerializer)
+from api.filters import TitleFilter
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
@@ -55,63 +61,79 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    permission_classes = (AllowAny,)
     serializer_class = TitleSerializer
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            self.permission_classes = [AllowAny]
+        else:
+            self.permission_classes = (RoleIsAdmin,)
+        return super().get_permissions()
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerAdminModeratorOrReadOnly)
     serializer_class = ReviewSerializer
-    pagination_class = PageNumberPagination
+
+    def _get_title(self):
+        title_id = self.kwargs.get("title_id")
+        return get_object_or_404(Title, id=title_id)
 
     def get_queryset(self):
-        title_id = self.kwargs["title_id"]
-        return Review.objects.filter(title_id=title_id)
+        title = self._get_title()
+        return title.reviews.all()
 
     def perform_create(self, serializer):
-        title_id = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-        serializer.save(author=self.request.user, title_id=title_id)
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({'title_id': self.kwargs.get('title_id')})
-        return context
+        title = self._get_title()
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerAdminModeratorOrReadOnly)
     serializer_class = CommentSerializer
-    pagination_class = PageNumberPagination
+
+    def _get_title(self):
+        title_id = self.kwargs.get("title_id")
+        return get_object_or_404(Title, id=title_id)
+
+    def _get_review(self):
+        review_id = self.kwargs.get("review_id")
+        return get_object_or_404(Review, id=review_id)
 
     def get_queryset(self):
-        title_id = self.kwargs["title_id"]
-        review_id = self.kwargs["review_id"]
-        return Comment.objects.filter(title_id=title_id, review_id=review_id)
+        review = self._get_review()
+        return review.comments.all()
 
     def perform_create(self, serializer):
-        title_id = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-        review_id = get_object_or_404(Review, id=self.kwargs.get("review_id"))
-        serializer.save(
-            author=self.request.user,
-            title_id=title_id,
-            review_id=review_id
-        )
+        title = self._get_title()
+        review = self._get_review()
+        serializer.save(author=self.request.user, title=title, review=review)
 
 
-def send_confirmation_code(user):
-    code = create_code(1000, 9999)
-    user.confirmation_code = code
+def create_confirmation_code(username):
+    """Create and sent confirmation_code for registration."""
+
+    confirmation_code = create_code(1000, 9999)
+    user = get_object_or_404(User, username=username)
+    user.confirmation_code = confirmation_code
     user.save()
 
     subject = 'Registration in the YaMDb project.'
-    message = f'Your confirmation code {code}.'
+    message = f'Your confirmation code {confirmation_code}.'
     from_email = settings.ADMIN_EMAIL
     to_email = [user.email]
     return send_mail(subject, message, from_email, to_email)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def signup(request):
     """Creates a new user and sends a confirmation code to email."""
 
@@ -121,7 +143,7 @@ def signup(request):
 
     if user.exists():
         user = user.get(email=email)
-        send_confirmation_code(user)
+        create_confirmation_code(user.username)
         return Response(
             {'message': 'User with this email exists.'
              'Verification code sent again.'
@@ -134,18 +156,53 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        send_confirmation_code(user)
+        create_confirmation_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def get_token(request):
-    """Give a token to the user."""
-
     serializer = TokenSerializer(data=request.data)
-    if serializer.is_valid():
-        username = serializer.validated_data.get('username')
-        user = get_object_or_404(User, username=username)
-        access = AccessToken.for_user(user)
-        return Response(f'token: {access}', status=status.HTTP_200_OK)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(User, username=request.data['username'])
+    confirmation_code = serializer.data.get('confirmation_code')
+    if confirmation_code == str(user.confirmation_code):
+        return Response(f'token: {AccessToken.for_user(user)}',
+                        status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """ViewSet for viewing users and editing user data."""
+
+    lookup_field = 'username'
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (RoleIsAdmin,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+
+    @action(
+        methods=['GET', 'PATCH'],
+        detail=False,
+        url_path='me',
+        permission_classes=[IsAuthenticated]
+    )
+    def me_page(self, request):
+        """ViewSet for viewing by the user and
+        editing information about himself."""
+
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
