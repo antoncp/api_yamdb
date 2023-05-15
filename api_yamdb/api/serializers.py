@@ -1,9 +1,13 @@
+from django.conf import settings
+from django.core.validators import MaxLengthValidator
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Category, Comment, Genre, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title, User
+from reviews.validators import username_validator, validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -124,3 +128,51 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ("id", "text", "author", "pub_date")
         read_only_fields = ("id", "author", "pub_date")
         model = Comment
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    """Serializer for user registration."""
+    username = serializers.CharField(
+        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
+                    username_validator, validate_username]
+    )
+    email = serializers.EmailField(max_length=settings.LIMIT_EMAIL,
+                                   required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    """Serializer for getting token."""
+
+    username = serializers.CharField(
+        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
+                    validate_username]
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
+
+    def validate(self, data):
+        username = data['username']
+        user = get_object_or_404(User, username=username)
+        if user.confirmation_code != data['confirmation_code']:
+            raise serializers.ValidationError('Confirmation code not correct.')
+        return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    first_name = serializers.CharField(
+        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
+
+    last_name = serializers.CharField(
+        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role'
+                  )

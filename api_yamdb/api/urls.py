@@ -1,9 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import (CategoryListCreateDeleteViewSet, CommentViewSet,
-                    GenreListCreateDeleteViewSet, ReviewViewSet,
-                    TitleViewSet, signup, get_token)
+from api.views import (CategoryListCreateDeleteViewSet, CommentViewSet,
+                       GenreListCreateDeleteViewSet, ReviewViewSet,
+                       TitleViewSet, UserViewSet, get_token, signup)
 
 
 app_name = 'api'
@@ -22,6 +22,7 @@ router_v1.register(
     CommentViewSet,
     basename='comments'
 )
+router_v1.register(r'users', UserViewSet)
 
 category_list = CategoryListCreateDeleteViewSet.as_view({
     'get': 'list',
@@ -37,6 +38,7 @@ genre_list = GenreListCreateDeleteViewSet.as_view({
 genre_detail = GenreListCreateDeleteViewSet.as_view({
     'delete': 'destroy',
 })
+
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),

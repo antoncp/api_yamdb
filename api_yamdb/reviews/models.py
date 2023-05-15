@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from reviews.validators import username_validator
 
 
 class UserRoles(models.TextChoices):
@@ -24,13 +25,22 @@ class User(AbstractUser):
         unique=True,
         error_messages={
             'unique': 'This name is taken, please select another!',
-        })
+        },
+        validators=(username_validator,)
+    )
 
     email = models.EmailField(
         verbose_name='Email',
         unique=True,
         max_length=254,
     )
+
+    first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                  blank=True)
+
+    last_name = models.CharField(max_length=settings.LIMIT_USERNAME,
+                                 blank=True)
+
     bio = models.TextField(
         verbose_name='Biography',
         blank=True,
@@ -55,8 +65,6 @@ class User(AbstractUser):
                 fields=('username', 'email'),
                 name='unique_user',
             ),
-            models.CheckConstraint(
-                check=~models.Q(username="me"), name="name_not_me")
         ]
 
     @property
@@ -71,6 +79,7 @@ class User(AbstractUser):
     def is_user(self):
         return self.role == UserRoles.USER
 
+   # лучше не урезать self.username. Оно должно быть уникально
     def __str__(self):
         return self.username[:settings.STRING_OUTPUT_LENGTH]
 
@@ -181,7 +190,7 @@ class Review(models.Model):
         related_name="reviews",
         verbose_name="Author",
     )
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         related_name="reviews",
@@ -199,9 +208,6 @@ class Review(models.Model):
         auto_now_add=True, db_index=True, verbose_name="Date created"
     )
 
-    def __str__(self):
-        return self.text[:settings.STRING_OUTPUT_LENGTH]
-
     class Meta:
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
@@ -210,6 +216,9 @@ class Review(models.Model):
                 fields=["author", "title_id"], name="only_one_review_allowed"
             ),
         ]
+
+    def __str__(self):
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
 
 
 class Comment(models.Model):
@@ -221,13 +230,7 @@ class Comment(models.Model):
         related_name="comments",
         verbose_name="Author",
     )
-    title_id = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name="comments",
-        verbose_name="Work",
-    )
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
         related_name="comments",
@@ -238,9 +241,15 @@ class Comment(models.Model):
         auto_now_add=True, db_index=True, verbose_name="Date created"
     )
 
-    def __str__(self):
-        return self.text[:settings.STRING_OUTPUT_LENGTH]
-
     class Meta:
         verbose_name = "Comment"
         verbose_name_plural = "Comments"
+
+    def __str__(self):
+        return self.text[:settings.STRING_OUTPUT_LENGTH]
+
+    def clean(self):
+        if self.title_id != self.review_id.title_id:
+            raise ValidationError(
+                'The provided title_id does not match the review'
+            )

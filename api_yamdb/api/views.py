@@ -1,17 +1,24 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
-from rest_framework import mixins
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
+from random import randint as create_code
 
-from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer,
-                          TitleSerializer)
-from .permissions import RoleIsAdmin
-from .filters import TitleFilter
-from reviews.models import Category, Comment, Genre, Review, Title
+from django.conf import settings
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
+
+from api.permissions import IsAdminOrReadOnly, IsAdminOnly
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             SignUpSerializer, TitleSerializer,
+                             TokenSerializer, UserSerializer)
+from api.filters import TitleFilter
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class ListCreateDeleteViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
@@ -26,13 +33,7 @@ class GenreListCreateDeleteViewSet(ListCreateDeleteViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
@@ -41,13 +42,7 @@ class CategoryListCreateDeleteViewSet(ListCreateDeleteViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -55,13 +50,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     serializer_class = TitleSerializer
-
-    def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
-            self.permission_classes = [AllowAny]
-        else:
-            self.permission_classes = (RoleIsAdmin,)
-        return super().get_permissions()
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -105,9 +94,92 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-def signup():
-    pass
+def create_confirmation_code(username):
+    """Create and sent confirmation_code for registration."""
+
+    confirmation_code = create_code(1000, 9999)
+    user = get_object_or_404(User, username=username)
+    user.confirmation_code = confirmation_code
+    user.save()
+
+    subject = 'Registration in the YaMDb project.'
+    message = f'Your confirmation code {confirmation_code}.'
+    from_email = settings.ADMIN_EMAIL
+    to_email = [user.email]
+    return send_mail(subject, message, from_email, to_email)
 
 
-def get_token():
-    pass
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    """Creates a new user and sends a confirmation code to email."""
+
+    serializer = SignUpSerializer(data=request.data)
+    email = request.data.get('email')
+    user = User.objects.filter(email=email)
+
+    if user.exists():
+        user = user.get(email=email)
+        create_confirmation_code(user.username)
+        return Response(
+            {'message': 'User with this email exists.'
+             'Verification code sent again.'
+             },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    else:
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data.get('email')
+        username = serializer.validated_data.get('username')
+        user = User.objects.get_or_create(username=username, email=email)
+        create_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_token(request):
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(User, username=request.data['username'])
+    confirmation_code = serializer.data.get('confirmation_code')
+    if confirmation_code == str(user.confirmation_code):
+        return Response(f'token: {AccessToken.for_user(user)}',
+                        status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """ViewSet for viewing users and editing user data."""
+
+    lookup_field = 'username'
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAdminOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+
+    @action(
+        methods=['GET', 'PATCH'],
+        detail=False,
+        url_path='me',
+        permission_classes=[IsAuthenticated]
+    )
+    def me_page(self, request):
+        """ViewSet for viewing by the user and
+        editing information about himself."""
+
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
