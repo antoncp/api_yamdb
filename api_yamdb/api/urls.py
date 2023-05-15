@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from api.views import (CategoryListCreateDeleteViewSet, CommentViewSet,
                        GenreListCreateDeleteViewSet, ReviewViewSet,
-                       TitleViewSet, signup, get_token)
+                       TitleViewSet, UserViewSet, get_token, signup)
 
 
 app_name = 'api'
@@ -22,6 +22,7 @@ router_v1.register(
     CommentViewSet,
     basename='comments'
 )
+router_v1.register(r'users', UserViewSet)
 
 category_list = CategoryListCreateDeleteViewSet.as_view({
     'get': 'list',
@@ -44,8 +45,8 @@ urlpatterns = [
     path(
         'v1/categories/<slug:slug>/', category_detail, name='category-detail',
     ),
-    path('v1/genres/', category_list, name='genre-list'),
-    path('v1/genres/<slug:slug>/', category_detail, name='genre-detail'),
+    path('v1/genres/', genre_list, name='genre-list'),
+    path('v1/genres/<slug:slug>/', genre_detail, name='genre-detail'),
     path('v1/auth/signup/', signup),
     path('v1/auth/token/', get_token),
 ]
