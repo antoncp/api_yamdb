@@ -43,6 +43,6 @@ class Command(BaseCommand):
                 self._connect_to_sqlite_database(DB_PATH, sql_query2, row)
 
     def handle(self, *args, **options):
-        print(CSV_DATA_PATH)
+        print(settings.BASE_DIR)
         for table, file in TABLE_FILE.items():
             self._load_csv(table, file)

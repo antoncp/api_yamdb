@@ -20,7 +20,6 @@ class IsAdminOrReadOnly(BasePermission):
     """
     message = "Editing or deleting this item is not allowed."
 
-<<<<<<< HEAD
     def has_permission(self, request, view):
         return (
             request.method in SAFE_METHODS
@@ -41,12 +40,6 @@ class IsAdminOnly(BasePermission):
     def has_permission(self, request, view):
         return (request.user.is_authenticated
                 and (request.user.is_admin or request.user.is_superuser))
-=======
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        return (user.is_authenticated
-                and (user.is_admin or user.is_superuser))
->>>>>>> 7d6bc694837f6dbebf9b67a9f3ace65d5190674b
 
 
 class RoleIsModerator(BasePermission):
