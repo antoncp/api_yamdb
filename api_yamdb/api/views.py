@@ -1,4 +1,5 @@
-from random import randint as create_code
+from random import sample
+from string import hexdigits
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -122,7 +123,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 def create_confirmation_code(username):
     """Create and sent confirmation_code for registration."""
 
-    confirmation_code = create_code(1000, 9999)
+    confirmation_code = ''.join(sample(hexdigits, 6))
     user = get_object_or_404(User, username=username)
     user.confirmation_code = confirmation_code
     user.save()
