@@ -22,6 +22,10 @@ pip install -r requirements.txt
 ```
 python manage.py migrate
 ``` 
+- Populate the database with prepared .csv-files
+```
+python manage.py load_csvdata
+```
 - And execute a command to run a server
 ```
 python manage.py runserver

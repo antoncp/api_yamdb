@@ -7,7 +7,7 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import username_validator, validate_username
+from reviews.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -134,12 +134,6 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
-    username = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
-                    username_validator, validate_username]
-    )
-    email = serializers.EmailField(max_length=settings.LIMIT_EMAIL,
-                                   required=True)
 
     class Meta:
         model = User
@@ -167,12 +161,6 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
-    first_name = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
-
-    last_name = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
 
     class Meta:
         model = User

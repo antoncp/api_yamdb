@@ -1,11 +1,14 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxValueValidator, MinValueValidator, RegexValidator,
+)
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from reviews.validators import username_validator
+
+from reviews.validators import validate_username
 
 
 class UserRoles(models.TextChoices):
@@ -20,13 +23,16 @@ class User(AbstractUser):
     """Custom User model."""
 
     username = models.CharField(
-        'Username',
-        max_length=settings.LIMIT_USERNAME,
-        unique=True,
+        _('username'), max_length=150, unique=True,
+        help_text=_('Required. 150 characters or fewer. Letters, digits and '
+                    '@/./+/-/_ only.'),
+        validators=[RegexValidator(r'^[\w.@+-]+\Z',
+                                   ('Enter a valid username. '
+                                    'This value may contain only letters,'
+                                    'numbers and @/./+/-/_ characters.'),
+                                   'invalid'), validate_username],
         error_messages={
-            'unique': 'This name is taken, please select another!',
-        },
-    )
+            'unique': _("A user with that username already exists."), })
 
     email = models.EmailField(
         verbose_name='Email',
@@ -55,6 +61,11 @@ class User(AbstractUser):
         null=True,
         max_length=50,
     )
+
+    def clean(self):
+        super().clean()
+        if not self.password:
+            self.password = None
 
     class Meta:
         verbose_name = 'User'
