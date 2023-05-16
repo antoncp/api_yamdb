@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MaxLengthValidator, RegexValidator
+from django.core.validators import MaxLengthValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -134,16 +134,6 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
-    username = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
-                    RegexValidator(r'^[\w.@+-]+\Z',
-                                   ('Enter a valid username. '
-                                    'This value may contain only letters,'
-                                    'numbers and @/./+/-/_ characters.')),
-                    validate_username]
-    )
-    email = serializers.EmailField(max_length=settings.LIMIT_EMAIL,
-                                   required=True)
 
     class Meta:
         model = User

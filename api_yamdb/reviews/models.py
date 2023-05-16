@@ -6,6 +6,7 @@ from django.core.validators import (MaxValueValidator, MinValueValidator,
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from reviews.validators import validate_username
 
 
 class UserRoles(models.TextChoices):
@@ -27,7 +28,7 @@ class User(AbstractUser):
                                    ('Enter a valid username. '
                                     'This value may contain only letters,'
                                     'numbers and @/./+/-/_ characters.'),
-                                   'invalid'), ],
+                                   'invalid'), validate_username],
         error_messages={
             'unique': _("A user with that username already exists."), })
 
@@ -57,9 +58,6 @@ class User(AbstractUser):
         blank=True,
         max_length=50
     )
-    is_staff = None
-    is_active = None
-    date_joined = None
 
     def clean(self):
         super().clean()
