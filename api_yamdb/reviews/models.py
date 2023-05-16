@@ -26,7 +26,6 @@ class User(AbstractUser):
         error_messages={
             'unique': 'This name is taken, please select another!',
         },
-        validators=(username_validator,)
     )
 
     email = models.EmailField(
@@ -34,7 +33,6 @@ class User(AbstractUser):
         unique=True,
         max_length=254,
     )
-
     first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
                                   blank=True)
 
@@ -54,7 +52,8 @@ class User(AbstractUser):
     confirmation_code = models.CharField(
         verbose_name='Confirmation code',
         blank=True,
-        max_length=50
+        null=True,
+        max_length=50,
     )
 
     class Meta:
