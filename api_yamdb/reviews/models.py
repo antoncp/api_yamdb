@@ -57,6 +57,14 @@ class User(AbstractUser):
         blank=True,
         max_length=50
     )
+    is_staff = None
+    is_active = None
+    date_joined = None
+
+    def clean(self):
+        super().clean()
+        if not self.password:
+            self.password = None
 
     class Meta:
         verbose_name = 'User'
