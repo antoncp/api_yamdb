@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -7,7 +7,7 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import username_validator, validate_username
+from reviews.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -136,7 +136,11 @@ class SignUpSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
     username = serializers.CharField(
         validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
-                    username_validator, validate_username]
+                    RegexValidator(r'^[\w.@+-]+\Z',
+                                   ('Enter a valid username. '
+                                    'This value may contain only letters,'
+                                    'numbers and @/./+/-/_ characters.')),
+                    validate_username]
     )
     email = serializers.EmailField(max_length=settings.LIMIT_EMAIL,
                                    required=True)
