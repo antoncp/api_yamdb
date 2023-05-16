@@ -1,3 +1,4 @@
+from typing import Iterable, Optional
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -26,7 +27,6 @@ class User(AbstractUser):
         error_messages={
             'unique': 'This name is taken, please select another!',
         },
-        validators=(username_validator,)
     )
 
     email = models.EmailField(
@@ -81,6 +81,11 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser is None:
+            self.is_superuser = False
+            self.password = None
 
 
 class GroupBaseModel(models.Model):
