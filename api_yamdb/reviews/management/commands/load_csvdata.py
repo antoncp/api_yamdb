@@ -4,7 +4,6 @@ import sqlite3
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-
 TABLE_FILE = {
     'reviews_category': 'category.csv',
     'reviews_genre': 'genre.csv',
