@@ -1,4 +1,3 @@
-from typing import Iterable, Optional
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -34,7 +33,8 @@ class User(AbstractUser):
         unique=True,
         max_length=254,
     )
-
+    is_active = None
+    date_joined = None
     first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
                                   blank=True)
 
@@ -54,7 +54,8 @@ class User(AbstractUser):
     confirmation_code = models.CharField(
         verbose_name='Confirmation code',
         blank=True,
-        max_length=50
+        null=True,
+        max_length=50,
     )
 
     class Meta:
@@ -81,11 +82,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-    def save(self, *args, **kwargs):
-        if self.is_superuser is None:
-            self.is_superuser = False
-            self.password = None
 
 
 class GroupBaseModel(models.Model):

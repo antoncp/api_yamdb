@@ -1,11 +1,7 @@
-import os
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
-import django
-django.setup()
 import csv
 import sqlite3
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 
 
@@ -28,7 +24,6 @@ class Command(BaseCommand):
         with sqlite3.connect(db_path) as con:
             cur = con.cursor()
             if params:
-                print(sql_query)
                 cur.execute(sql_query, params)
             else:
                 cur.execute(sql_query)
@@ -36,8 +31,9 @@ class Command(BaseCommand):
     def _delete_from_table(self, table_name):
         sql_query = f'DELETE FROM {table_name};'
         self._connect_to_sqlite_db(DB_PATH, sql_query)
+        print(f'Таблица {table_name} отчищена от старых данных')
 
-    def _load_csv(self, table_name, file_path):  
+    def _load_csv(self, table_name, file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             data = csv.reader(file, delimiter=',')
             first_row = next(data)
@@ -47,9 +43,11 @@ class Command(BaseCommand):
                                 f'VALUES({placeholders});')
             for row in data:
                 self._connect_to_sqlite_db(DB_PATH, sql_query_update, row)
+            print(f'{table_name} загружена данными из файла {file_path}')
 
     def handle(self, *args, **options):
         for table, csv_file in TABLE_FILE.items():
             file_path = CSV_DATA_PATH / csv_file
             self._delete_from_table(table)
             self._load_csv(table, file_path)
+            print('Загрузка окончена.')
