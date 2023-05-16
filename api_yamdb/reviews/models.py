@@ -33,8 +33,6 @@ class User(AbstractUser):
         unique=True,
         max_length=254,
     )
-    is_active = None
-    date_joined = None
     first_name = models.CharField(max_length=settings.LIMIT_USERNAME,
                                   blank=True)
 
