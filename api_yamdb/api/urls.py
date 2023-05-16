@@ -23,7 +23,7 @@ router_v1.register(
     CommentViewSet,
     basename='comments'
 )
-router_v1.register(r'users', UserViewSet)
+router_v1.register('users', UserViewSet)
 
 category_list = CategoryListCreateDeleteViewSet.as_view({
     'get': 'list',

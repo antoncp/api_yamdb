@@ -42,14 +42,6 @@ class IsAdminOnly(BasePermission):
                 and (request.user.is_admin or request.user.is_superuser))
 
 
-class RoleIsModerator(BasePermission):
-    """Only for moderator."""
-
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        return user.is_authenticated and user.is_moderator
-
-
 class IsAuthorOrReadOnly(BasePermission):
     """Only for author."""
 

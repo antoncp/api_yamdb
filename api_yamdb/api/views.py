@@ -1,4 +1,5 @@
-from random import randint as create_code
+from random import sample
+from string import hexdigits
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -98,7 +99,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 def create_confirmation_code(username):
     """Create and sent confirmation_code for registration."""
 
-    confirmation_code = create_code(1000, 9999)
+    confirmation_code = ''.join(sample(hexdigits, 6))
     user = get_object_or_404(User, username=username)
     user.confirmation_code = confirmation_code
     user.save()
@@ -118,15 +119,25 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     email = request.data.get('email')
     user = User.objects.filter(email=email)
+    username = request.data.get('username')
+
+    if User.objects.filter(username=username).exists():
+        if User.objects.filter(username=username).first().email != email:
+            return Response(
+                'Username is incorrect!', status=status.HTTP_400_BAD_REQUEST)
 
     if user.exists():
+        if username != user.first().username:
+            return Response(
+                'Email is incorrect!', status=status.HTTP_400_BAD_REQUEST
+            )
         user = user.get(email=email)
         create_confirmation_code(user.username)
         return Response(
             {'message': 'User with this email exists.'
              'Verification code sent again.'
              },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_200_OK
         )
 
     else:
@@ -134,7 +145,7 @@ def signup(request):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         user = User.objects.get_or_create(username=username, email=email)
-        create_confirmation_code(user)
+        create_confirmation_code(username)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -156,6 +167,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     lookup_field = 'username'
     queryset = User.objects.all()
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = UserSerializer
     permission_classes = (IsAdminOnly,)
     filter_backends = (SearchFilter,)
