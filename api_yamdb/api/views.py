@@ -70,8 +70,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title = self._get_title()
         return title.reviews.all()
-        title = self._get_title()
-        return title.reviews.all()
 
     def perform_create(self, serializer):
         title = self._get_title()
