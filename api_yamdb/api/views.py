@@ -96,7 +96,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = self._get_title()
         review = self._get_review()
-        serializer.save(author=self.request.user, review=review) # title=title,
+        serializer.save(author=self.request.user, review=review)
 
 
 def create_confirmation_code(username):

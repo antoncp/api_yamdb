@@ -92,9 +92,10 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-CSV_DATA_PATH = os.path.join(BASE_DIR, STATIC_URL, '/data/')
+# CSV_DATA_PATH = os.path.join(BASE_DIR, STATIC_URL, '/data/')
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+CSV_DATA_PATH = BASE_DIR / 'static/data/'
 
 AUTH_USER_MODEL = 'reviews.User'
 
