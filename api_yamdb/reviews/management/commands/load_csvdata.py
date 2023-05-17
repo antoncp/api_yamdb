@@ -1,3 +1,7 @@
+import os
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api_yamdb.settings")
+import django
+django.setup()
 import csv
 import sqlite3
 
