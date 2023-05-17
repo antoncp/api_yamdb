@@ -5,7 +5,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from reviews.validators import validate_username
+from users.validators import validate_username
 
 
 class UserRoles(models.TextChoices):
@@ -56,11 +56,6 @@ class User(AbstractUser):
         blank=True,
         max_length=50,
     )
-
-    def clean(self):
-        super().clean()
-        if not self.password:
-            self.password = None
 
     class Meta:
         verbose_name = 'User'
