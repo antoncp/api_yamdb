@@ -2,12 +2,13 @@ from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import username_validator, validate_username
+from reviews.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -82,6 +83,18 @@ class TitleSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def validate_year(self, value):
+        """
+        Validate that the year field value is between 0 and the current year value.
+
+        """
+        if value > timezone.now().year or value < 0:
+            raise serializers.ValidationError(
+                'Year value may not be above the current year value '
+                'or below 0.'
+            )
+        return value
+
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
         rating_rounded = round(rating) if rating else rating
@@ -134,12 +147,6 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
-    username = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
-                    username_validator, validate_username]
-    )
-    email = serializers.EmailField(max_length=settings.LIMIT_EMAIL,
-                                   required=True)
 
     class Meta:
         model = User
@@ -167,12 +174,6 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
-    first_name = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
-
-    last_name = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME)])
 
     class Meta:
         model = User

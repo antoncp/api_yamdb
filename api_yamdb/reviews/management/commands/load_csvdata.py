@@ -2,8 +2,48 @@ import csv
 import sqlite3
 
 from django.core.management.base import BaseCommand
+from django.apps import apps
 from django.conf import settings
 
+MODEL_FILE = {
+    'User': 'users.csv',
+    'Category': 'category.csv',
+    'Genre': 'genre.csv',
+    'Title': 'titles.csv',
+    'Title_genre': 'genre_title.csv',
+    'Review': 'review.csv',
+    'Comment': 'comments.csv',
+}
+
+CSV_DATA_PATH = settings.CSV_DATA_PATH
+
+
+class Command(BaseCommand):
+
+    def _load_csv(self, file_path, model):
+        """Load data from csv file into sqlite db."""
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = csv.DictReader(file, delimiter=',')
+            for row in data:
+                model_instance = model(**row)
+                model_instance.save()
+            print(f'{model} - done')
+
+    def handle(self, *args, **options):
+        #print(dict(apps.all_models.get('reviews')))
+        for model, csv_file in MODEL_FILE.items():
+            model = apps.get_model('reviews', model)
+            file_path = CSV_DATA_PATH / csv_file
+            self._load_csv(file_path, model)
+            print('Загрузка окончена.')
+
+
+
+
+
+
+
+'''
 TABLE_FILE = {
     'reviews_category': 'category.csv',
     'reviews_genre': 'genre.csv',
@@ -62,5 +102,6 @@ class Command(BaseCommand):
         for table, csv_file in TABLE_FILE.items():
             file_path = CSV_DATA_PATH / csv_file
             self._delete_from_table(table)
-            self._load_csv(table, file_path)
+            # self._load_csv(table, file_path)
             print('Загрузка окончена.')
+'''
