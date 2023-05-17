@@ -96,57 +96,36 @@ class CommentViewSet(viewsets.ModelViewSet):
             serializer.save(author=self.request.user, review=review)
 
 
-def create_confirmation_code(username):
-    """Create and sent confirmation_code for registration."""
-
-    confirmation_code = ''.join(sample(hexdigits, 6))
-    user = get_object_or_404(User, username=username)
-    user.confirmation_code = confirmation_code
-    user.save()
-
-    subject = 'Registration in the YaMDb project.'
-    message = f'Your confirmation code {confirmation_code}.'
-    from_email = settings.ADMIN_EMAIL
-    to_email = [user.email]
-    return send_mail(subject, message, from_email, to_email)
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def signup(request):
+class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Creates a new user and sends a confirmation code to email."""
 
-    serializer = SignUpSerializer(data=request.data)
-    email = request.data.get('email')
-    user = User.objects.filter(email=email)
-    username = request.data.get('username')
+    queryset = User.objects.all()
+    serializer_class = SignUpSerializer
+    permission_classes = (AllowAny,)
 
-    if User.objects.filter(username=username).exists():
-        if User.objects.filter(username=username).first().email != email:
-            return Response(
-                'Username is incorrect!', status=status.HTTP_400_BAD_REQUEST
-            )
+    def create_confirmation_code(self, user):
+        """Create confirmation_code for registration."""
 
-    if user.exists():
-        if username != user.first().username:
-            return Response(
-                'Email is incorrect!', status=status.HTTP_400_BAD_REQUEST
-            )
-        user = user.get(email=email)
-        create_confirmation_code(user.username)
-        return Response(
-            {'message': 'User with this email exists.'
-             'Verification code sent again.'
-             },
-            status=status.HTTP_200_OK
-        )
+        confirmation_code = ''.join(sample(hexdigits, 6))
+        user.confirmation_code = confirmation_code
+        user.save()
+        return confirmation_code
 
-    else:
+    def sent_confirmation_code(self, email, confirmation_code):
+        subject = 'Registration in the YaMDb project.'
+        message = f'Your confirmation code {confirmation_code}.'
+        from_email = settings.ADMIN_EMAIL
+        to_email = email
+        return send_mail(subject, message, from_email, [to_email, ])
+
+    def create(self, request):
+        """."""
+        serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data.get('email')
-        username = serializer.validated_data.get('username')
-        user = User.objects.get_or_create(username=username, email=email)
-        create_confirmation_code(username)
+        user, _ = User.objects.get_or_create(**serializer.validated_data)
+        confirmation_code = self.create_confirmation_code(user)
+        self.sent_confirmation_code(email=user.email,
+                                    confirmation_code=confirmation_code)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
