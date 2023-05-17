@@ -1,10 +1,14 @@
+import os
 from datetime import timedelta
 from pathlib import Path
-import os
+
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
+# Демонстрация, без .env в репозитории не проходит тесты платформы.
+# В реальном проекте, конечно, так делать не будем. Секреты - отдельно.
+SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = True
 
@@ -18,11 +22,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'django_filters',
+
     'reviews',
     'api',
     'users',
+
+    'django_filters',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
