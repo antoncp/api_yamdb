@@ -8,21 +8,21 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-
-from api.permissions import (IsAdminOrReadOnly, IsAdminOnly,
-                             IsOwnerAdminModeratorOrReadOnly)
-from rest_framework.permissions import (AllowAny,
-                                        IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             SignUpSerializer, TitleSerializer,
-                             TokenSerializer, UserSerializer)
-from api.filters import TitleFilter
 from reviews.models import Category, Genre, Review, Title, User
+
+from api.filters import TitleFilter
+from api.permissions import (
+    IsAdminOnly, IsAdminOrReadOnly, IsOwnerAdminModeratorOrReadOnly,
+)
+from api.serializers import (
+    CategorySerializer, CommentSerializer, GenreSerializer, ReviewSerializer,
+    SignUpSerializer, TitleSerializer, TokenSerializer, UserSerializer,
+)
 
 
 class ListCreateDeleteViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
@@ -92,7 +92,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = self._get_title()
         review = self._get_review()
-        serializer.save(author=self.request.user, review=review)
+        if review.title == title:
+            serializer.save(author=self.request.user, review=review)
 
 
 def create_confirmation_code(username):
