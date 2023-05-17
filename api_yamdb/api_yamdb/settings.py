@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 
     'reviews',
     'api',
+    'users',
 
     'django_filters',
     'rest_framework',
@@ -103,7 +104,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 CSV_DATA_PATH = BASE_DIR / 'static/data/'
 
-AUTH_USER_MODEL = 'reviews.User'
+AUTH_USER_MODEL = 'users.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
