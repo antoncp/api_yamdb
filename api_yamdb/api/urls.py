@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from api.views import (
     CategoryListCreateDeleteViewSet, CommentViewSet,
     GenreListCreateDeleteViewSet, ReviewViewSet, TitleViewSet, UserViewSet,
-    SignUpViewSet, get_token,
+    signup, get_token,
 )
 
 app_name = 'api'
@@ -48,6 +48,6 @@ urlpatterns = [
     ),
     path('v1/genres/', genre_list, name='genre-list'),
     path('v1/genres/<slug:slug>/', genre_detail, name='genre-detail'),
-    path('v1/auth/signup/', SignUpViewSet.as_view({'post': 'create'})),
+    path('v1/auth/signup/', signup),
     path('v1/auth/token/', get_token),
 ]
