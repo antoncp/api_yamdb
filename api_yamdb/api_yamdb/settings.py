@@ -1,10 +1,14 @@
+import os
 from datetime import timedelta
 from pathlib import Path
-import os
+
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
+# Демонстрация, без .env в репозитории не проходит тесты платформы.
+# В реальном проекте, конечно, так делать не будем. Секреты - отдельно.
+SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = True
 
@@ -18,10 +22,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'django_filters',
+
     'reviews',
     'api',
+    'users',
+
+    'django_filters',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -92,12 +99,11 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-# CSV_DATA_PATH = os.path.join(BASE_DIR, STATIC_URL, '/data/')
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 CSV_DATA_PATH = BASE_DIR / 'static/data/'
 
-AUTH_USER_MODEL = 'reviews.User'
+AUTH_USER_MODEL = 'users.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
@@ -122,4 +128,5 @@ SIMPLE_JWT = {
 LIMIT_EMAIL = 254
 LIMIT_USERNAME = 150
 STRING_OUTPUT_LENGTH = 15
-ADMIN_EMAIL = "admin@yamdb.com"
+FORBIDDEN_USERNAMES = ['me']
+ADMIN_EMAIL = config('ADMIN_EMAIL')

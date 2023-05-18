@@ -2,12 +2,13 @@ from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import validate_username
+from users.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -82,6 +83,19 @@ class TitleSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def validate_year(self, value):
+        """
+        Validate that the year field value is above the current year.
+
+        """
+        if value > timezone.now().year:
+            raise serializers.ValidationError(
+                detail={
+                    'year': 'This field may not be above the current year.'
+                }
+            )
+        return value
+
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
         rating_rounded = round(rating) if rating else rating
@@ -111,8 +125,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        """Validate that """
         request = self.context['request']
-        title_id = self.context.get('view').kwargs.get('title_id')
+        title_id = self.context['view'].kwargs.get('title_id')
         author = request.user
         if (request.method == 'POST'
            and Review.objects.filter(author=author, title=title_id).exists()):
@@ -143,11 +158,6 @@ class SignUpSerializer(serializers.ModelSerializer):
 class TokenSerializer(serializers.ModelSerializer):
     """Serializer for getting token."""
 
-    username = serializers.CharField(
-        validators=[MaxLengthValidator(settings.LIMIT_USERNAME),
-                    validate_username]
-    )
-
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
@@ -156,7 +166,9 @@ class TokenSerializer(serializers.ModelSerializer):
         username = data['username']
         user = get_object_or_404(User, username=username)
         if user.confirmation_code != data['confirmation_code']:
-            raise serializers.ValidationError('Confirmation code not correct.')
+            raise serializers.ValidationError(
+                {'confirmation_code': 'Confirmation code is not correct.'}
+            )
         return data
 
 
@@ -164,5 +176,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role'
-                  )
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
