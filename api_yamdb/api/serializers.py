@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.core.validators import MaxLengthValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -8,7 +6,6 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from users.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
