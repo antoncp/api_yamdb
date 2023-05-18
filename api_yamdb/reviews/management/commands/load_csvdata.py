@@ -1,107 +1,46 @@
 import csv
-import sqlite3
 
 from django.core.management.base import BaseCommand
 from django.apps import apps
 from django.conf import settings
 
 MODEL_FILE = {
-    'User': 'users.csv',
-    'Category': 'category.csv',
-    'Genre': 'genre.csv',
-    'Title': 'titles.csv',
-    'Title_genre': 'genre_title.csv',
-    'Review': 'review.csv',
-    'Comment': 'comments.csv',
+    'apps': {
+        "users": {'User': 'users.csv'},
+        "reviews": {
+            'Category': 'category.csv',
+            'Genre': 'genre.csv',
+            'Title': 'titles.csv',
+            'Title_genre': 'genre_title.csv',
+            'Review': 'review.csv',
+            'Comment': 'comments.csv'
+        }
+    }
 }
 
 CSV_DATA_PATH = settings.CSV_DATA_PATH
 
 
 class Command(BaseCommand):
+    help = 'Prepolutes db from csv files.'
 
     def _load_csv(self, file_path, model):
-        """Load data from csv file into sqlite db."""
+        """Load data from a csv file into a db table."""
         with open(file_path, 'r', encoding='utf-8') as file:
             data = csv.DictReader(file, delimiter=',')
+            self.stdout.write(f'Loading {model}')
             for row in data:
-                model_instance = model(**row)
-                model_instance.save()
-            print(f'{model} - done')
+                try:
+                    model_instance = model(**row)
+                    model_instance.save()
+                except Exception as er:
+                    self.stdout.write(f'{row} - {er}', ending='\n\n')
+            self.stdout.write(f'{model} loading  is complete', ending='\n\n')
 
     def handle(self, *args, **options):
-        #print(dict(apps.all_models.get('reviews')))
-        for model, csv_file in MODEL_FILE.items():
-            model = apps.get_model('reviews', model)
-            file_path = CSV_DATA_PATH / csv_file
-            self._load_csv(file_path, model)
-            print('Загрузка окончена.')
-
-
-
-
-
-
-
-'''
-TABLE_FILE = {
-    'reviews_category': 'category.csv',
-    'reviews_genre': 'genre.csv',
-    'reviews_title': 'titles.csv',
-    'reviews_title_genre': 'genre_title.csv',
-    'reviews_comment': 'comments.csv',
-    'reviews_review': 'review.csv',
-    'reviews_user': 'users.csv',
-}
-USER_EXTRA_DATA = {
-    "is_superuser": 0,
-    'is_active': 0,
-    "date_joined": "2023-05-06",
-    "is_staff": 0,
-}
-
-CSV_DATA_PATH = settings.CSV_DATA_PATH
-DB_PATH = settings.DATABASES['default']['NAME']
-
-
-class Command(BaseCommand):
-
-    def _connect_to_sqlite_db(self, db_path, sql_query, params=None):
-        """Connect to sqlite db and perform sql query."""
-        with sqlite3.connect(db_path) as con:
-            cur = con.cursor()
-            if params:
-                cur.execute(sql_query, params)
-            else:
-                cur.execute(sql_query)
-
-    def _delete_from_table(self, table_name):
-        """Delete data from sqlite table"""
-        sql_query = f'DELETE FROM {table_name};'
-        self._connect_to_sqlite_db(DB_PATH, sql_query)
-        print(f'Таблица {table_name} отчищена от старых данных')
-
-    def _load_csv(self, table_name, file_path):
-        """Load data from csv file into sqlite db."""
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = csv.reader(file, delimiter=',')
-            first_row = next(data)
-            if table_name == 'reviews_user':
-                first_row += list(USER_EXTRA_DATA.keys())
-            columns = ', '.join(first_row)
-            placeholders = ', '.join(len(first_row) * '?')
-            sql_query_update = (f'INSERT INTO {table_name}({columns}) '
-                                f'VALUES({placeholders});')
-            for row in data:
-                if table_name == 'reviews_user':
-                    row += list(USER_EXTRA_DATA.values())
-                self._connect_to_sqlite_db(DB_PATH, sql_query_update, row)
-            print(f'{table_name} загружена данными из файла {file_path}')
-
-    def handle(self, *args, **options):
-        for table, csv_file in TABLE_FILE.items():
-            file_path = CSV_DATA_PATH / csv_file
-            self._delete_from_table(table)
-            # self._load_csv(table, file_path)
-            print('Загрузка окончена.')
-'''
+        for app_name, data in MODEL_FILE['apps'].items():
+            for model_name, csv_file in data.items():
+                model = apps.get_model(app_name, model_name)
+                file_path = CSV_DATA_PATH / csv_file
+                self._load_csv(file_path, model)
+        self.stdout.write('The db prepopulation is complete.')
