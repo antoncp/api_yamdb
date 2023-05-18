@@ -1,10 +1,8 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    MaxValueValidator, MinValueValidator,
-)
-
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from reviews.validators import validate_not_exceed_current_year
 from users.models import User
 
