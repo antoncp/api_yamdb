@@ -99,7 +99,6 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-# CSV_DATA_PATH = os.path.join(BASE_DIR, STATIC_URL, '/data/')
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 CSV_DATA_PATH = BASE_DIR / 'static/data/'
@@ -129,4 +128,5 @@ SIMPLE_JWT = {
 LIMIT_EMAIL = 254
 LIMIT_USERNAME = 150
 STRING_OUTPUT_LENGTH = 15
-ADMIN_EMAIL = "admin@yamdb.com"
+FORBIDDEN_USERNAMES = ['me']
+ADMIN_EMAIL = config('ADMIN_EMAIL')

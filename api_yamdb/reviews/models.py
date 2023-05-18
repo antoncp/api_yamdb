@@ -3,8 +3,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxValueValidator, MinValueValidator,
 )
+
 from django.db import models
-from django.utils import timezone
+from reviews.validators import validate_not_exceed_current_year
 from users.models import User
 
 
@@ -66,11 +67,10 @@ class Title(models.Model):
     )
     year = models.PositiveSmallIntegerField(
         'Release year',
-        validators=[MaxValueValidator(timezone.now().year)]
+        validators=[validate_not_exceed_current_year]
     )
     description = models.TextField(
         'Description',
-        null=True,
         blank=True,
     )
     genre = models.ManyToManyField(
@@ -100,6 +100,7 @@ class Title(models.Model):
         return f'{self.category} "{self.name}", {self.year}'
 
     def display_genres(self):
+        """Display all genres in a single line on the admin panel."""
         return ', '.join(map(str, self.genre.all()))
 
     display_genres.short_description = 'Genres'
