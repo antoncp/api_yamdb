@@ -1,4 +1,4 @@
-# Yamdb
+# Feedback service
 ### Description
 REST API for feedback service (training project for Yandex Practicum). Writing down your thoughts, commenting others, express your opinion about a wide variety of works of cinema, literature, music and art. Retrieval/manipulate information via Django REST framework: quick and safe.  
 ### Technologies
